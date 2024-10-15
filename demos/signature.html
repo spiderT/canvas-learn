@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>canvas signature</title>
+  </head>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      height: 100vh;
+      width: 100vw;
+      background-color: #f0f0f0;
+      overflow: hidden;
+    }
+
+    canvas {
+      border: 1px solid #000;
+      background-color: #fff;
+      border-radius: 16px;
+    }
+
+    .controls {
+      margin-top: 10px;
+      display: flex;
+      gap: 10px;
+    }
+
+    button,
+    select {
+      padding: 5px 10px;
+      cursor: pointer;
+    }
+  </style>
+  <body>
+    <canvas id="signature-area" width="700" height="400"></canvas>
+    <div class="controls">
+      <select id="stroke-style">
+        <option value="pen">Pen</option>
+        <option value="brush">Red Brush</option>
+      </select>
+      <button id="clear">Clear</button>
+    </div>
+  </body>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const canvas = document.getElementById("signature-area");
+      const ctx = canvas.getContext("2d");
+      let drawing = false;
+      let lastX = 0,
+        lastY = 0;
+      let strokeStyle = "pen";
+
+      function startDrawing(e) {
+        // Block default behavior to prevent page scrolling
+        e.preventDefault();
+        drawing = true;
+        ctx.beginPath();
+
+        const { offsetX, offsetY } = getEventPosition(e);
+        lastX = offsetX;
+        lastY = offsetY;
+        ctx.moveTo(offsetX, offsetY);
+      }
+
+      function draw(e) {
+        e.preventDefault();
+        if (!drawing) return;
+
+        const { offsetX, offsetY } = getEventPosition(e);
+
+        // Use a Bezier curve to draw a smooth transition
+        ctx.quadraticCurveTo(
+          lastX,
+          lastY,
+          (lastX + offsetX) / 2,
+          (lastY + offsetY) / 2
+        );
+        ctx.stroke();
+
+        lastX = offsetX;
+        lastY = offsetY;
+      }
+
+      function stopDrawing(e) {
+        e.preventDefault();
+        drawing = false;
+      }
+
+      function getEventPosition(e) {
+        const offsetX = e.offsetX || e.touches[0].clientX - canvas.offsetLeft;
+        const offsetY = e.offsetY || e.touches[0].clientY - canvas.offsetTop;
+        return { offsetX, offsetY };
+      }
+
+      canvas.addEventListener("mousedown", startDrawing);
+      canvas.addEventListener("mousemove", draw);
+      canvas.addEventListener("mouseup", stopDrawing);
+      canvas.addEventListener("mouseout", stopDrawing);
+
+      canvas.addEventListener("touchstart", startDrawing);
+      canvas.addEventListener("touchmove", draw);
+      canvas.addEventListener("touchend", stopDrawing);
+      canvas.addEventListener("touchcancel", stopDrawing);
+
+      document.getElementById("clear").addEventListener("click", function () {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      });
+
+      document
+        .getElementById("stroke-style")
+        .addEventListener("change", function (e) {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          strokeStyle = e.target.value;
+          updateStrokeStyle();
+        });
+
+      function updateStrokeStyle() {
+        if (strokeStyle === "pen") {
+          ctx.lineWidth = 2;
+          ctx.lineCap = "round";
+          ctx.strokeStyle = "black";
+        } else if (strokeStyle === "brush") {
+          ctx.lineWidth = 5;
+          ctx.lineCap = "round";
+          ctx.strokeStyle = "red";
+        }
+      }
+
+      updateStrokeStyle();
+    });
+  </script>
+</html>
